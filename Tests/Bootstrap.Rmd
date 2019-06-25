@@ -1,0 +1,345 @@
+---
+title: "Bootstrap"
+author: "Arnaud Gloaguen, Arthur Tenenhaus"
+date: "3 mai 2017"
+output:
+  html_document:
+    toc: true
+    theme: united
+  pdf_document:
+    toc: true
+    theme: united
+---
+
+#1 - RGCCA vs PLSR
+The goal here is to compare PLSR and RGCCA in terms of results and speed. We are using PLSR because it is the core function used in ci.spls, the function we are starting to  build ci.rgcca.
+```{r setup, warning=FALSE, message=FALSE}
+
+#Clean environment
+rm(list = ls())
+
+#Load librairies
+library(spls)
+library(pls)
+library(devtools)
+library(microbenchmark)
+library(ggplot2)
+library(gliomaData)
+
+#Load current work of RGCCA (branch Boostrap)
+load_all("../../.")
+```
+
+
+Comparison of coefficients and speed
+```{r}
+data(mice)
+
+#PLSR
+Y       = scale2(mice$y, center = T, scale = T, bias = T)
+X       = scale2(mice$x, center = T, scale = T, bias = T)
+ncomp   = 1
+method  = "simpls"
+res_pls = plsr(Y ~ X, ncomp = ncomp, method = method)
+
+#RGCCA
+A               = list(x = X, y = Y)
+C               = matrix(1, 2, 2) - diag(2)
+tau             = c(1, 1)
+ncomps          = c(1, 1)
+scheme          = "factorial"
+scale           = F
+init            = "svd"
+bias            = F
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+
+#Correlation
+cor_X = drop(cor(res_pls$projection, res_rgcca$a[[1]]))
+cor_Y = drop(cor(res_pls$Yloadings, res_rgcca$a[[2]]))
+
+cor_X
+cor_Y
+
+#Loadings are indeed the same (just difference of normalization)
+plot(cor_X*res_rgcca$a[[1]], col = "red", pch = 16, main = "X_loadings", ylab = "loadings")
+points(res_pls$projection/norm2(res_pls$projection))
+
+plot(cor_X*res_rgcca$a[[2]], col = "red", pch = 16, main = "Y_loadings", ylab = "loadings")
+points(res_pls$Yloadings/norm2(res_pls$Yloadings))
+
+#Commparison of speed.
+tm = microbenchmark(PLSR  = plsr(Y ~ X, ncomp = ncomp, method = method),
+                    RGCCA = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc), 
+                    times = 100)
+autoplot(tm)
+
+#PLSR is 2 times faster than RGCCA
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+#2 - ci.RGCCA vs ci.PLSR
+Now we want to compare "ci.spls" with "ci.rgcca" in terms of speed. Indeed, as RGCCA and PLSR are giving the same result. A priori, there is no need to check that the CI are the same between the 2 techniques. We will compare the speed trough 3 different datasets : Mice/GliomaData/Russet.
+
+##2.1 - Mice data
+Here, we still have a factor 2 between "ci.spls" and "ci.rgcca".
+```{r}
+data(mice)
+
+# SPLS
+f    <- spls( mice$x, mice$y, K=1, eta=0.6)
+# CI with SPLS
+ci.f <- ci.spls( f, plot.it=TRUE, plot.fix="x", plot.var=20 )
+
+#RGCCA
+A               = mice
+D               = A
+D[[1]]          = D[[1]][,f$A]
+C               = matrix(1, 2, 2) - diag(2)
+tau             = c(1, 1)
+ncomps          = c(1, 1)
+scheme          = "factorial"
+scale           = T
+init            = "svd"
+bias            = T
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = D, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+#CI with RGCCA
+B               = 1000
+verbose         = T
+plot            = T
+ci.res_rgcca    = ci.rgcca(object = res_rgcca, A = D, B = B, verbose = verbose, plot = plot)
+
+#Speed
+tm = microbenchmark(mice_spls = ci.spls( f, plot.it=F),
+                    mice_rgcca = ci.rgcca(object = res_rgcca, A = D, B = B, verbose = F, plot = F),
+                    times = 5)
+autoplot(tm)
+
+#ci.spls is arround 2 times faster than ci.rgcca
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+##2.2 - GliomaData
+###2.2.1 - Variable selection
+What ci.spls is doing is that is keeps for bootstrapping only the variables selected thanks to "spls", so of course the speed will increase. So first we compare the speed with the same strategy. We get still a factor 2 in speed.
+```{r}
+data("ge_cgh_locIGR")
+
+# SPLS
+X    = cbind(ge_cgh_locIGR$multiblocks$GE, ge_cgh_locIGR$multiblocks$CGH)
+Y    = ge_cgh_locIGR$multiblocks$y
+K    = 1
+eta  = 0.6
+f    = spls(X, Y, K = K, eta = eta)
+# CI with SPLS
+plot.it  = TRUE
+plot.fix = "x"
+plot.var = 20
+ci.f     = ci.spls(f, plot.it = plot.it, plot.fix = plot.fix, plot.var = plot.var)
+
+#RGCCA
+A               = ge_cgh_locIGR$multiblocks
+A[[1]]          = A[[1]][,f$A]
+A[[2]]          = NULL
+C               = matrix(1, 2, 2) - diag(2)
+tau             = c(1, 1)
+ncomps          = c(1, 1)
+scheme          = "factorial"
+scale           = T
+init            = "svd"
+bias            = T
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+#CI with RGCCA
+B               = 1000
+verbose         = T
+plot            = T
+ci.res_rgcca    = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = verbose, plot = plot)
+
+#Speed
+tm = microbenchmark(glioma_spls  = ci.spls( f, plot.it = F),
+                    glioma_rgcca = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = F, plot = F),
+                    times = 2)
+tm
+
+#ci.spls is arround 3 times faster than ci.rgcca
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+
+###2.2.2 - No selection
+Then we force "ci.spls" to bootstrap on all variables and we are doing the same in "ci.rgcca". The result is slightly different with a factor 4.5 in speed between the 2. But let's compare PLSR and RGCCA with gliomaData in terms of speed.
+```{r}
+data("ge_cgh_locIGR")
+
+# SPLS
+X    = cbind(ge_cgh_locIGR$multiblocks$GE, ge_cgh_locIGR$multiblocks$CGH)
+Y    = ge_cgh_locIGR$multiblocks$y
+K    = 1
+eta  = 0.6
+f    = spls(X, Y, K = K, eta = eta)
+f$A  = 1:ncol(X)
+# CI with SPLS
+plot.it  = TRUE
+plot.fix = "x"
+plot.var = 20
+ci.f     = ci.spls(f, plot.it = plot.it, plot.fix = plot.fix, plot.var = plot.var)
+
+#RGCCA
+A               = ge_cgh_locIGR$multiblocks
+C               = matrix(c(0, 0, 1, 0, 0, 1, 1, 1, 0), 3, 3)
+tau             = c(1, 1, 1)
+ncomps          = c(1, 1, 1)
+scheme          = "factorial"
+scale           = T
+init            = "svd"
+bias            = T
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+#CI with RGCCA
+B               = 1000
+verbose         = T
+plot            = T
+ci.res_rgcca    = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = verbose, plot = plot)
+
+#Speed
+tm = microbenchmark(glioma_spls  = ci.spls( f, plot.it = F),
+                    glioma_rgcca = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = F, plot = F),
+                    times = 2)
+tm
+
+#ci.spls is arround 4.5 times faster than ci.rgcca
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+###2.2.3 - PLSR vs RGCCA for gliomaData
+One of the details you have ti pay attention to is the fact that to bootsrap, "ci.spls" is calling PLSR without any question of scaling. So here we compare in terms of speed PLSR without scaling and RGCCA with a scaling part. The result is that PLSR is 8 times faster than PLSR. 
+```{r}
+data("ge_cgh_locIGR")
+
+# SPLS
+X       = cbind(ge_cgh_locIGR$multiblocks$GE, ge_cgh_locIGR$multiblocks$CGH)
+Y       = ge_cgh_locIGR$multiblocks$y
+ncomp   = 1
+method  = "simpls"
+res_pls = plsr(Y ~ X, ncomp = ncomp, method = method)
+
+#RGCCA
+A               = ge_cgh_locIGR$multiblocks
+C               = matrix(c(0, 0, 1, 0, 0, 1, 1, 1, 0), 3, 3)
+tau             = c(1, 1, 1)
+ncomps          = c(1, 1, 1)
+scheme          = "factorial"
+scale           = T
+init            = "svd"
+bias            = T
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+
+#Commparison of speed.
+tm = microbenchmark(glioma_plsr  = plsr(Y ~ X, ncomp = ncomp, method = method),
+                    glioma_rgcca =  rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc),
+                    times = 50)
+autoplot(tm)
+
+#PLSR is 2 times faster than RGCCA
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+
+
+##2.3 - Russet data
+Final comparison with the Russet Data. "ci.spls" is 3 times faster than "ci.rgcca".
+```{r}
+data("Russett")
+X_agric         = as.matrix(Russett[,c("gini","farm","rent")])
+X_ind           = as.matrix(Russett[,c("gnpr","labo")])
+X_polit         = as.matrix(Russett[ ,c("inst", "ecks",  "death","demostab", "dictatur")])
+
+# SPLS
+X    = cbind(X_agric, X_ind)
+Y    = X_polit
+K    = 1
+eta  = 0.6
+f    = spls(X, Y, K = K, eta = eta)
+f$A  = 1:ncol(X)
+# CI with SPLS
+plot.it  = TRUE
+plot.fix = "x"
+plot.var = 3
+ci.f     = ci.spls(f, plot.it = plot.it, plot.fix = plot.fix, plot.var = plot.var)
+
+#RGCCA
+A               = list(X_agric, X_ind, X_polit)
+C               = matrix(c(0, 0, 1, 0, 0, 1, 1, 1, 0), 3, 3)
+tau             = c(0, 0, 0)
+ncomps          = c(1, 1, 1)
+scheme          = "factorial"
+scale           = F
+init            = "svd"
+bias            = F
+verbose         = F 
+scale_size_bloc = F
+res_rgcca       = rgcca(A = A, C = C, tau = tau, ncomp = ncomps, scheme = scheme, scale = scale, init = init, 
+                        bias = bias, verbose = verbose, scale_size_bloc = scale_size_bloc)
+#CI with RGCCA
+B               = 1000
+verbose         = T
+plot            = T
+ci.res_rgcca    = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = verbose, plot = plot)
+
+#Speed
+tm = microbenchmark(russet_spls  = ci.spls( f, plot.it = F),
+                    russet_rgcca = ci.rgcca(object = res_rgcca, A = A, B = B, verbose = F, plot = F),
+                    times = 20)
+autoplot(tm)
+
+#ci.spls is arround 3 times faster than ci.rgcca
+TIME = tapply(X = tm$time, INDEX = tm$expr, FUN = mean)
+TIME[2]/TIME[1]
+```
+
+
+#3 - Conclusion
+Through these differents tests, we could have seen that "ci.spls"/"ci.rgcca" or "spls"/"rgcca" have not the same speed. The advantage is all the time for functions of the package "SPLS". This lies upon many reasons.
+<br/>
+Some of this raison are linked to stuff that SPLS are not doing:
+<ul>
+
+<li>PLSR is without no doubt faster than RGCCA. This is the core function call in "ci.spls". However, no scaling is done with this function, which is not the case with RGCCA. For each bootstrap sample, RGCCA have a step of scaling.</li>
+
+<li>For each boostrap sample, "ci.rgcca" recalibrate the sign of the loadings thanks to the first loading computed and then compute the correlation between all the components. Those 2 steps are not done in "ci.spls".</li>
+
+<li>At the end of dealing with all those boostrap samples, RGCCA has some steps to create a correlation matrix with a CI for each correlation. This part is not present in "ci.spls"</li>
+
+For all those points (except for the scaling part), tests were done in order to see if some strategies could improve the speed of those part (through "microbenchmark" and "profviz"). Tests were done on "mice" data. For this configuration, functions seems to be optimal. Maybe try with other data sets (bigger).
+
+</ul>
+
+<br/>
+Others are linked to stuff that SPLS is doing:
+<ul>
+
+<li>SPLS is a sparse method. So in "ci.spls" they are bootstrapping only on the variables selected thanks to SPLS, which is a clear gain in time</li>
+
+</ul>
+
+One-way of getting closer to SPLS is to improce the speed of RGCCA. An int is to parallelize maybe the computation of the semidefinite matrix M before the while boucle. In any case, here, parallelization thanks to mcapply clearly improve the speed of "ci.rgcca". We will have to test if this function is working on windows machine because it could not be the case. However, it could be replace by parallel:::parSapply I think. Moreober pbmcapply allows to display time but it clearly takes longer to execute.
