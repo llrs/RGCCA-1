@@ -182,7 +182,7 @@ rgcca <- function(A, C = 1-diag(length(A)), tau = rep(1, length(A)), ncomp = rep
           colnames(Y[[b]]) = "comp1"
         }
         
-        out <- list(Y=Y, a =a, astar=a, C=C, 
+        out <- list(A=A, Y=Y, a =a, astar=a, C=C, 
                     tau=result$tau, scheme=scheme, ncomp=ncomp, crit=result$crit, AVE=AVE)
         class(out) <- "rgcca"
         return(out)
@@ -265,7 +265,8 @@ rgcca <- function(A, C = 1-diag(length(A)), tau = rep(1, length(A)), ncomp = rep
     for (j in 1:J)  mode[j] = ifelse(nb_row>=pjs[j], "Primal", "Dual") 
     
     
-    out <- list(Y = shave.matlist(Y, ncomp),
+    out <- list(A = A,
+                Y = shave.matlist(Y, ncomp),
                 a = shave.matlist(a, ncomp), 
                 astar = shave.matlist(astar, ncomp),
                 C = C, tau = tau_mat, scheme = scheme,
