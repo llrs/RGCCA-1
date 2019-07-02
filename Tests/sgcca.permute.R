@@ -6,6 +6,7 @@
 #' @param C A design matrix that describes the relationships between blocks (default: complete design)
 #' @param scheme The value is "horst", "factorial" or "centroid" (default: "centroid")
 #' @param plot A logical, should a plot of coeffi
+#' @param n_cores For linux and MacOS number of cores used for parallelisation
 #' @value A list containing :
 #' @value \item {pval}
 #' @value \item {zstat}
@@ -20,7 +21,8 @@ sgcca.permute = function(A,
                          ncomp = rep(1,length(A)),
                          scheme = "centroid",
                          plot = FALSE,
-                         tol = .Machine$double.eps){
+                         tol = .Machine$double.eps,
+                         n_cores = 1){
   if (is.null(c1s)) {
     c1s <- matrix(NA, nrow = 10, ncol = length(A))
     for (k in 1:length(A)) {
@@ -50,14 +52,15 @@ sgcca.permute = function(A,
                                                           crit = crit))
     parallel::stopCluster(cl)
   } else {
-    permcrit = parallel::mlcapply(1:nperm, 
+    permcrit = simplify2array(parallel::mclapply(1:nperm, 
                                    function(x) sgcca.crit(A = A, 
                                                           C = C, 
                                                           c1s = c1s, 
                                                           ncomp = ncomp, 
                                                           scheme = scheme, 
                                                           tol = tol, 
-                                                          crit = crit))
+                                                          crit = crit),
+                                  mc.cores = n_cores))
   }
   pvals = zs = matrix(NA,nrow = NROW(c1s), ncol = NCOL(c1s)+1)
   # chaque ligne : [critère 1, critère 2, valeur pvals ou zs]

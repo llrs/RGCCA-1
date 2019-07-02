@@ -15,7 +15,7 @@
 
 #  out= list(top_var = top_var, count = count_sort)
 
-bootstrap_sgcca = function(A,nb_boot,c1,
+sgcca.bootstrap = function(A,nb_boot,c1,
                            C = 1 - diag(length(A)),
                            tau = rep(1,length(A)), 
                            scheme = "centroid",
@@ -24,11 +24,10 @@ bootstrap_sgcca = function(A,nb_boot,c1,
                            plot = FALSE){
   J = length(A) - 1
   trials = seq(1,nb_boot)
-  
   n_core = parallel::detectCores()
   cl = makeCluster(n_core-1)
   e = environment()
-  parallel::clusterExport(cl,c("A","c1","C","trials","scheme","J","tol"),envir = e)  #Variables utilisées dans le cluster
+  parallel::clusterExport(cl,c("A","c1","C","trials","scheme","J","tol"),envir = e)  #Variables utilisees dans le cluster
   parallel::clusterEvalQ(cl,library(RGCCA))
   
   boot_sgcca = function(trial){
@@ -41,7 +40,7 @@ bootstrap_sgcca = function(A,nb_boot,c1,
   }
   
   results = parLapply(cl,trials,boot_sgcca) 
-  res = list()    #Pour concatener les résultats dans une liste de trois blocs. au final 1 élement par block, 1 variable par colonne et la valeur prise pour chaque bootstrap en ligne
+  res = list()    #Pour concatener les resultats dans une liste de trois blocs. au final 1 element par block, 1 variable par colonne et la valeur prise pour chaque bootstrap en ligne
   for (i in 1:J){
     res[[i]] = results[[1]][[i]]
     for (j in 2:nb_boot){
