@@ -50,7 +50,7 @@ aci.rgcca = function(object, A, B, alpha = 0.05, ndim = 1, verbose = FALSE, plot
     if (verbose){
       boot_b  = pbmcapply::pbmclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol), mc.cores = nb_cores)
     }else{
-      boot_b  = parallel::mlcapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol), mc.cores = nb_cores)
+      boot_b  = parallel::mclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol), mc.cores = nb_cores)
     }
   }
   ########################################
