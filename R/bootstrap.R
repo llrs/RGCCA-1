@@ -1,13 +1,19 @@
-bootstrap = function(n, J, A, object, W, ndim){
+# Internal function called by ci.rgcca and aci.rgcca
+# It applies sampling with replacement on individuals of the data set. Then rgcca is applied with the same parameters as "object"
+
+bootstrap = function(n, J, A, object, W, ndim, tol = .Machine$double.eps){
   ind   = sample(n,replace=TRUE)
   Aboot = lapply(A, function(x) x[ind, ])
-
+  
   # check for constant variables (variance equal to 0) 
   varnull = rep(0, J)
-  for (xx in 1:J) varnull[xx] = length(which(apply(Aboot[[xx]], 2, var)==0))
-  
+  for (xx in 1:J){
+    varnull[[xx]] = ifelse(!is.null(dim(Aboot[[xx]])), 
+                           length(which(apply(Aboot[[xx]], 2, var)==0)),
+                           ifelse(var(Aboot[[xx]])==0,1,0))
+  }
   if (sum(varnull) ==0){
-    result.rgcca <- rgcca(Aboot, object$C, object$tau, ncomp = object$ncomp, object$scheme, scale=TRUE, verbose=FALSE, scale_size_bloc = F)
+    result.rgcca <- rgcca(Aboot, object$C, object$tau, ncomp = object$ncomp, object$scheme, scale=TRUE, verbose=FALSE,tol = tol, scale_size_bloc = F)
     ########################################################################
     # Test on correlation                                                  #
     # Construction of the RGCCA outer weight vectors from boostrap sample  #
@@ -26,4 +32,3 @@ bootstrap = function(n, J, A, object, W, ndim){
   }
   return(list(MAT_COR = MAT_COR, Astar = Astar))
 }
-  
