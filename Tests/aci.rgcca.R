@@ -18,7 +18,13 @@
 #' 
 #' return(list(a_boot = Astar, CI = mat, CI_sel = mat_sel, inner_relation = inner_relation))
 #' 
-aci.rgcca = function(object, A, B, alpha = 0.05, ndim = 1, verbose = FALSE, plot = "selected", nb_cores = 1, tol = .Machine$double.eps) {
+aci.rgcca = function(object, A, B, 
+                     alpha = 0.05, 
+                     ndim = 1, 
+                     verbose = FALSE, 
+                     plot = "selected", 
+                     nb_cores = 1, 
+                     tol = .Machine$double.eps) {
   n = NROW(A[[1]])
   p = sapply(A, ncol)
   J = length(A)
