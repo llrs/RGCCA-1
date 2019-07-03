@@ -26,7 +26,7 @@ sgcca.permute = function(A,
   if (is.null(c1s)) {
     c1s <- matrix(NA, nrow = 10, ncol = length(A))
     for (k in 1:length(A)) {
-      c1s[, k] <- pmin(1/(seq(0.8, 0.1, len = 10) * 
+      c1s[, k] <- pmin(1/(seq(0.9, 0.01, len = 10) * 
                                   sqrt(ncol(A[[k]]))), 1)
     }
   }

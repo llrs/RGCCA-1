@@ -23,8 +23,7 @@ aci.rgcca = function(object, A, B,
                      ndim = 1, 
                      verbose = FALSE, 
                      plot = "selected", 
-                     nb_cores = 1, 
-                     tol = .Machine$double.eps) {
+                     nb_cores = 1) {
   n = NROW(A[[1]])
   p = sapply(A, ncol)
   J = length(A)
@@ -44,19 +43,19 @@ aci.rgcca = function(object, A, B,
   if (Sys.info()["sysname"] == "Windows"){
     n_cores = parallel::detectCores()
     cl = parallel::makeCluster(n_cores-1) #7 coeurs
-    e = environment() 
-    
-    parallel::clusterExport(cl,c("object", "A","n","J","ndim","W","B","tol"),envir = e)  #Variables utilis?es dans le cluster
+    e = environment()
+
+    parallel::clusterExport(cl,c("object", "A","n","J","ndim","W","B"),envir = e)  #Variables utilis?es dans le cluster
     parallel::clusterEvalQ(cl, library(devtools))
     parallel::clusterEvalQ(cl, load_all("RGCCA/."))
-    
-    boot_b  = parallel::parLapply(cl,1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol))
+    boot_b  = parallel::parLapply(cl,1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim))
     parallel::stopCluster(cl)
+    # boot_b  = lapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim))
   } else {
     if (verbose){
-      boot_b  = pbmcapply::pbmclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol), mc.cores = nb_cores)
+      boot_b  = pbmcapply::pbmclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim), mc.cores = nb_cores)
     }else{
-      boot_b  = parallel::mclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim, tol = tol), mc.cores = nb_cores)
+      boot_b  = parallel::mclapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim), mc.cores = nb_cores)
     }
   }
   ########################################
