@@ -22,7 +22,8 @@ sgcca.bootstrap = function(A,nb_boot,c1,
                            top = 15,
                            tol = .Machine$double.eps,
                            plot = FALSE){
-  J = length(A) - 1
+  J = length(A)
+  J = ifelse(dim(A[[J]])[2] == 1,J-1,J)  # Avoid an error if the bloc to explain has only one dimension (a vector)
   trials = seq(1,nb_boot)
   n_core = parallel::detectCores()
   cl = makeCluster(n_core-1)

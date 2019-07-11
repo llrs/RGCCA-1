@@ -72,9 +72,12 @@ aci.rgcca = function(object, A, B,
   mat  = list()
   tail = qnorm(1-alpha/(2))
   for (j in 1:J){
-    mat[[j]]           <- cbind(W[[j]], M1[[j]][1, ]-tail*M1[[j]][2, ], M1[[j]][1, ]+tail*M1[[j]][2, ])
+    mat[[j]]           <- cbind(W[[j]], M1[[j]][1, ]-tail*M1[[j]][2, ], 
+                                M1[[j]][1, ]+tail*M1[[j]][2, ],
+                                pnorm(0, mean = abs(M1[[j]][1,]), sd = M1[[j]][2,]),
+                                pnorm(0, mean = abs(M1[[j]][1,]), sd = M1[[j]][2,])*length(M1[[j]][1,]))
     rownames(mat[[j]]) <- colnames(A[[j]])
-    colnames(mat[[j]]) <- c("Initial weights","Lower Bound","Upper Bound")
+    colnames(mat[[j]]) <- c("Initial weights","Lower Bound","Upper Bound","p(X)>0","p(X)>0 corrected")
   }
   
   ########################################
@@ -112,8 +115,6 @@ aci.rgcca = function(object, A, B,
     }
   }else if (plot == "selected"){
     par(cex = .8)
-    J = length(l) - 1
-    
     for (j in 1:J){
       color = rep("green3", nrow(mat_sel[[j]]))
       Sel     = barplot(mat_sel[[j]][, 1], col = color, 
