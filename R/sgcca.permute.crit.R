@@ -79,10 +79,11 @@ sgcca.permute.crit = function(A,
   out = list(pvals = pvals, zstat = zs , 
              bestpenalties =  bestpenalties,
              sgcca.best = sgcca.best,
-             permcrit = permcrit, crit = crits )
+             permcrit = permcrit, crit = crits,
+             penalties = c1s)
   if (plot){
-    par(mfrow=c(2,1), mar = c(2,1,2,1))
-    plot(1:NROW(c1s),out$crit, ylim = c(0, max(crits,permcrit)))
+    par(mfrow=c(2,1), mar = c(2,4,2,1))
+    plot(1:NROW(c1s),out$crit, ylim = c(0, max(crits,permcrit)), ylab = "pvals")
     for (i in 1:nperm){
       points(1:NROW(c1s),out$permcrit[,i], col = "green")
     }
@@ -90,7 +91,7 @@ sgcca.permute.crit = function(A,
       segments(j,out$crit[j],j+1,out$crit[j+1])
     }
     
-    plot(1:NROW(c1s),out$zstat[,length(A)+1])
+    plot(1:NROW(c1s),out$zstat[,length(A)+1],ylab = "zstat")
     for (j in 1:(NROW(c1s)-1)){
       segments(j,out$zstat[j,length(A)+1],j+1,out$zstat[j+1,length(A)+1])
     }

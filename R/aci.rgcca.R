@@ -77,7 +77,7 @@ aci.rgcca = function(object, A, B,
                                 pnorm(0, mean = abs(M1[[j]][1,]), sd = M1[[j]][2,]),
                                 pnorm(0, mean = abs(M1[[j]][1,]), sd = M1[[j]][2,])*length(M1[[j]][1,]))
     rownames(mat[[j]]) <- colnames(A[[j]])
-    colnames(mat[[j]]) <- c("Initial weights","Lower Bound","Upper Bound","p(X)>0","p(X)>0 corrected")
+    colnames(mat[[j]]) <- c("Initial weights","Lower Bound","Upper Bound","p(X)>0","p(X)>0 corrected bonf")
   }
   
   ########################################
