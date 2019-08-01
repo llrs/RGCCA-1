@@ -1,4 +1,6 @@
 #' Run through a set of constraint parameters c1s to select the best with permutation
+#' Only one component per block for the time being
+#' 
 #' 
 #' @param A A list that contains the J blocks of variables \mathbf{X_1}, \mathbf{X_2}, ..., \mathbf{X_J}
 #' @param c1s A matrix containing sets of constraint variables, one row by set. If null, sgcca.permute takes 10 sets between min values ($1/sqrt(ncol)$) and 1
@@ -7,12 +9,47 @@
 #' @param scheme The value is "horst", "factorial" or "centroid" (default: "centroid")
 #' @param plot A logical, should a plot of coeffi
 #' @param n_cores For linux and MacOS number of cores used for parallelisation
+#' @param ncomp Number of component computed for each block
 #' @value A list containing :
 #' @value \item {pval}
 #' @value \item {zstat}
 #' @value \item {bestpenalties}
 #' @value \item {permcrit} 
 #' @value \item {crit}
+#' @examples
+#'
+#' #############
+#' # Example 1 #
+#' #############
+#' \dontrun{
+#' u <- matrix(rnorm(50),ncol=1)
+#' v1 <- matrix(c(rep(.5,25),rep(0,75)),ncol=1)
+#' v2 <- matrix(c(rep(1,25),rep(0,25)),ncol=1)
+#' v3 <- matrix(c(rep(.5,25),rep(0,175)),ncol=1)
+#'
+#' x1 <- u%*%t(v1) + matrix(rnorm(50*100),ncol=100)
+#' x2 <- u%*%t(v2) + matrix(rnorm(50*50),ncol=50)
+#' x3 <- u%*%t(v3) + matrix(rnorm(50*200),ncol=200)
+#'
+#' xlist <- list(x1, x2, x3)
+#' nperm = 10
+#' 
+#' C = matrix(c(0,1,1,1,0,1,1,1,0),3,3)
+#' params= as.matrix(expand.grid(c11 = seq(0.2, 1, len = 3),
+#'                               c12 = seq(0.2, 1, len = 3),
+#'                               c13 = seq(0.2, 1, len = 3)))
+#' perm.sgcca = sgcca.permute.crit(xlist, C = C, nperm = nperm, scheme = "horst", plot = TRUE, tol = 1e-6)
+#'
+#' out.sgcca = sgcca(xlist, C = C, c1 = perm.sgcca$bestpenalties, scheme = "horst")
+#' par(mfrow=c(3,1), mar = rep(2,4))
+#' PlotCGH(out.sgcca$a[[1]], chrom=rep(1,ncol(x1)))
+#' PlotCGH(out.sgcca$a[[2]], chrom=rep(2,ncol(x2)))
+#' PlotCGH(out.sgcca$a[[3]], chrom=rep(3,ncol(x3)))
+#' title(main = "SGCCA.permute, C by default", outer = TRUE, line = -2)
+#' 
+#' 
+#'@export sgcca.permute.crit
+
 
 sgcca.permute.crit = function(A,
                          c1s = NULL,
@@ -32,11 +69,11 @@ sgcca.permute.crit = function(A,
   }
   crit = crits = rep(0,NROW(c1s))
   for (i in 1:NROW(c1s)){
-    out = sgcca(A, C, c1 = c1s[i,], ncomp = ncomp, scheme = scheme)
+    out = sgcca(A, C, c1 = c1s[i,], ncomp = ncomp, scheme = scheme, tol = tol)
     crits[i] = out$crit
   }
   if (Sys.info()["sysname"] == "Windows"){
-    n_cores = parallel::detectCores()
+    n_cores = parallel::detectCores()-1
     e=environment()
     cl = parallel::makeCluster(n_cores)
     parallel::clusterExport(cl,c("A","c1s","nperm","C","ncomp","scheme","out","crit","crits","tol"),envir = e)
@@ -71,8 +108,6 @@ sgcca.permute.crit = function(A,
       pvals[i,] = c(c1s[i,],mean(permcrit[i,]>=crits[i]))
       zs[i,] = c(c1s[i,],(crits[i] - mean(permcrit[i,])) / (sd(permcrit[i,])))# + 0.05))
   }
-  
-  # zs <- c(zs, (cors[i] - mean(permcors[, i]))/(sd(permcors[,i]) + 0.05))
   
   bestpenalties = c1s[which.max(zs[,length(A)+1]),1:length(A)]
   sgcca.best = sgcca(A, C = C, c1 = bestpenalties, ncomp = ncomp, scheme = scheme)
