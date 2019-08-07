@@ -69,6 +69,7 @@ sgcca.bootstrap = function(A,nb_boot,c1,
     lapply(g,function(x) print(x))
   }
   top_var = lapply(count_sort, function(x) names(x)[1:top])
-  out= list(top_var = top_var, count = count_sort)
+  out= list(top_var = top_var, count = count_sort, top = top, nb_boot = nb_boot, A = A)
+  class(out) = "sgcca.bootstrap"
   return(out)
 }

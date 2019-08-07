@@ -135,5 +135,8 @@ aci.rgcca = function(object, A, B,
       segments(Sel-0.1, mat_sel[[j]][, 3], Sel+0.1, mat_sel[[j]][, 3])
     }
   }
-  return(list(a_boot = Astar, CI = mat, CI_sel = mat_sel, inner_relation = inner_relation))
+  out = list(a_boot = Astar, CI = mat, CI_sel = mat_sel, inner_relation = inner_relation, A = A)
+  class(out) = "rgcca.bootstrap"
+  return(out)
+  
 }
