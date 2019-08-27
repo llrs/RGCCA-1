@@ -47,18 +47,19 @@ aci.rgcca = function(object, A, B,
 
     parallel::clusterExport(cl,c("object", "A","n","J","ndim","W","B"),envir = e)  #Variables utilis?es dans le cluster
     parallel::clusterEvalQ(cl, library(devtools))
-    tryCatch({parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))},
-             error = function(e) {warning("error : please check if you are in the directory containing RGCCA functions")})
-    # boot_b  = parallel::parLapply(cl,1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim))
-    tryCatch({ boot_b  = parallel::parLapply(cl,
-                                             1:B, 
-                                             function(z) bootstrap(n = n, 
-                                                                   J = J, 
-                                                                   A = A, 
-                                                                   object = object, 
-                                                                   W = W, 
-                                                                   ndim = ndim))},
-             error = function(e) {warning("an error occured with sgcca.crit"); return(NULL) })
+    # tryCatch({parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))},
+    #          error = function(e) {warning("error : please check if you are in the directory containing RGCCA functions")})
+    parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))
+    boot_b  = parallel::parLapply(cl,1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim))
+    # tryCatch({boot_b  = parallel::parLapply(cl,
+    #                                          1:B, 
+    #                                          function(z) bootstrap(n = n, 
+    #                                                                J = J, 
+    #                                                                A = A, 
+    #                                                                object = object, 
+    #                                                                W = W, 
+    #                                                                ndim = ndim))},
+    #          error = function(e) {warning("an error occured with sgcca.crit"); return(NULL) })
     parallel::stopCluster(cl)
     # boot_b  = lapply(1:B, function(z) bootstrap(n = n, J = J, A = A, object = object, W = W, ndim = ndim))
   } else {

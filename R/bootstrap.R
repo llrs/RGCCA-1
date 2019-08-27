@@ -15,7 +15,7 @@ bootstrap = function(n, J, A, object, W, ndim){
   if (sum(varnull) ==0){
     result.rgcca <- rgcca(Aboot, object$C, object$tau, 
                           ncomp = object$ncomp, object$scheme, 
-                          scale=TRUE, verbose=FALSE, scale_size_bloc = F)
+                          scale=TRUE, verbose=FALSE) #, scale_size_bloc = F)
     ########################################################################
     # Test on correlation                                                  #
     # Construction of the RGCCA outer weight vectors from boostrap sample  #
