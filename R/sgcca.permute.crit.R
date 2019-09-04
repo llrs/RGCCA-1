@@ -118,7 +118,7 @@ sgcca.permute.crit = function(A,
              penalties = c1s)
   if (plot){
     par(mfrow=c(2,1), mar = c(2,4,2,1))
-    plot(1:NROW(c1s),out$crit, ylim = c(0, max(crits,permcrit)), ylab = "pvals")
+    plot(1:NROW(c1s),out$crit, ylim = c(0, max(crits,permcrit)), ylab = "crit")
     for (i in 1:nperm){
       points(1:NROW(c1s),out$permcrit[,i], col = "green")
     }
