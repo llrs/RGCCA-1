@@ -110,11 +110,15 @@ sgcca.permute.crit = function(A,
   }
   
   bestpenalties = c1s[which.max(zs[,length(A)+1]),1:length(A)]
+  bestpval = pvals[which.max(zs[,length(A)+1]),length(A)+1]
   sgcca.best = sgcca(A, C = C, c1 = bestpenalties, ncomp = ncomp, scheme = scheme)
-  out = list(pvals = pvals, zstat = zs , 
+  out = list(pvals = pvals, 
+             zstat = zs , 
              bestpenalties =  bestpenalties,
              sgcca.best = sgcca.best,
-             permcrit = permcrit, crit = crits,
+             bestpval = bestpval,
+             permcrit = permcrit, 
+             crit = crits,
              penalties = c1s)
   if (plot){
     par(mfrow=c(2,1), mar = c(2,4,2,1))

@@ -15,7 +15,9 @@
 
 #  out= list(top_var = top_var, count = count_sort)
 
-sgcca.bootstrap = function(A,nb_boot,c1,
+sgcca.bootstrap = function(A,
+                           nb_boot,
+                           c1,
                            C = 1 - diag(length(A)),
                            tau = rep(1,length(A)), 
                            scheme = "centroid",
@@ -63,7 +65,7 @@ sgcca.bootstrap = function(A,nb_boot,c1,
         coord_flip() +
         geom_bar(stat = "identity")+
         ggtitle(paste0("Stability selection for block ", j, ", nb_boot = ",nb_boot))+
-        xlab("Metabolites")+
+        xlab(names(A)[j])+
         ylab("Occurence")
     }
     lapply(g,function(x) print(x))

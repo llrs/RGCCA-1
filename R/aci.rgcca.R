@@ -18,7 +18,9 @@
 #' 
 #' return(list(a_boot = Astar, CI = mat, CI_sel = mat_sel, inner_relation = inner_relation))
 #' 
-aci.rgcca = function(object, A, B, 
+aci.rgcca = function(object, 
+                     A, 
+                     B, 
                      alpha = 0.05, 
                      ndim = 1, 
                      verbose = FALSE, 
@@ -139,5 +141,4 @@ aci.rgcca = function(object, A, B,
   out = list(a_boot = Astar, CI = mat, CI_sel = mat_sel, inner_relation = inner_relation, A = A)
   class(out) = "rgcca.bootstrap"
   return(out)
-  
 }

@@ -13,6 +13,8 @@
 #' @param scale Logical. True if the superbloc needs to be scaled for the regression
 #' @param expend Numeric. To scale the ratio individual/variable
 #' @param show_r_squared Logical. Should the r.squared coefficient be shown
+#' @param arrows Logical. Should arrows be plotted to the variable coordinates
+#' @param main String of character. The main title of the biplot
 #' 
 #' @return a ggplot biplot 
 #' 
@@ -62,7 +64,8 @@ rgcca.biplot = function(object,
                         scale = TRUE,
                         expand = 1,
                         show_r_square = FALSE,
-                        main = NULL){
+                        main = NULL,
+                        arrows = TRUE){
   if (dim(object$Y[[superbloc_pos]])[2] < 2){
     return("Two components on the superbloc are required for the biplot")
   } else {
@@ -104,12 +107,19 @@ rgcca.biplot = function(object,
   g = ggplot(data = df1, aes(comp1,comp2))+
       geom_vline(xintercept = 0) +
       geom_hline(yintercept = 0) + 
-      geom_text_repel(aes(colour = ind_col, label = ind_names)) +
+      # geom_text_repel(aes(colour = ind_col, label = ind_names)) +
       geom_point(aes(colour = ind_col)) +
-      # scale_color_gradient2(high = "red", low = "blue", mid = "white") +
-      geom_segment(data = df2, aes(x = 0, y = 0, xend = y1, yend = y2), arrow=arrow(length=unit(0.2,"cm")), colour = var_col) +
-      geom_text_repel(data = df2, aes(y1,y2, label = var_names)) +
+      geom_label_repel(label = round(100*atrophy,1),label.size = 0.25,size = 2) +
+      scale_fill_gradient(low = "yellow", high = "brown") +
+      # geom_text(data = df2, aes(y1,y2, label = var_names, colour = var_col)) +
       ggtitle(main)    
+  
+  if (arrows == TRUE){
+    g = g + geom_segment(data = df2, aes(x = 0, y = 0, xend = y1, yend = y2), 
+                         arrow=arrow(length=unit(0.2,"cm")), colour = var_col) +
+      geom_text_repel(data = df2, aes(y1,y2, label = var_names))
+
+  }
   
   g
   return(g)
