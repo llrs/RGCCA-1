@@ -28,7 +28,7 @@ sgcca.bootstrap = function(A,
   J = ifelse(dim(A[[J]])[2] == 1,J-1,J)  # Avoid an error if the bloc to explain has only one dimension (a vector)
   trials = seq(1,nb_boot)
   n_core = parallel::detectCores()
-  cl = makeCluster(n_core-1)
+  cl = parallel::makeCluster(n_core-1)
   e = environment()
   parallel::clusterExport(cl,c("A","c1","C","trials","scheme","J","tol"),envir = e)  #Variables utilisees dans le cluster
   parallel::clusterEvalQ(cl,library(RGCCA))
@@ -42,7 +42,7 @@ sgcca.bootstrap = function(A,
     return(STAB)
   }
   
-  results = parLapply(cl,trials,boot_sgcca) 
+  results = parallel::parLapply(cl,trials,boot_sgcca) 
   res = list()    #Pour concatener les resultats dans une liste de trois blocs. au final 1 element par block, 1 variable par colonne et la valeur prise pour chaque bootstrap en ligne
   for (i in 1:J){
     res[[i]] = results[[1]][[i]]

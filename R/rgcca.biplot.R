@@ -57,10 +57,13 @@ library(ggrepel)
 rgcca.biplot = function(object, 
                         superbloc, 
                         superbloc_pos = length(object$Y), 
-                        var_names=colnames(superbloc), 
-                        ind_names = rownames(superbloc),
-                        ind_col = NULL,
-                        var_col = NULL,
+                        var = colnames(superbloc),
+                        var_labels = var, 
+                        var_col = rep("red",length(var_labels)),
+                        ind = rownames(superbloc),
+                        ind_labels = ind,
+                        ind_col = rep(1,length(ind_names)),
+                        ind_size = 1,
                         scale = TRUE,
                         expand = 1,
                         show_r_square = FALSE,
@@ -74,15 +77,15 @@ rgcca.biplot = function(object,
   if (scale == TRUE) {superbloc = scale2(superbloc)}
   r = list()
   r.square = list()
-  for (i in 1:length(var_names)){
-    r[[i]] = lm(superbloc[,var_names[i]] ~ Y[,1] + Y[,2])
-    # print(paste(var_names[i],"Adjusted R-squared :",summary(r[[i]])$adj.r.squared))
+  for (i in 1:length(var)){
+    r[[i]] = lm(superbloc[,var[i]] ~ Y[,1] + Y[,2])
+    # print(paste(var_labels[i],"Adjusted R-squared :",summary(r[[i]])$adj.r.squared))
     r.square[[i]] = summary(r[[i]])$adj.r.squared
     r[[i]] = r[[i]]$coefficient[2:3]
   }
   r = reduce(r,rbind)
   r.square = reduce(r.square,rbind)
-  rownames(r) = rownames(r.square) = var_names
+  rownames(r) = rownames(r.square) = var_labels
   if (show_r_square) {print(as.matrix(r.square[order(r.square,decreasing = TRUE),1]))}
   
   unsigned.range <- function(x)
@@ -94,33 +97,23 @@ rgcca.biplot = function(object,
   
   ratio <- max(rangy1/rangx1, rangy2/rangx2)/expand
   r=r*ratio
-  df1 = data.frame(ind_names,Y)
-  if (!is.null(ind_col)){
-    df1$ind_col = ind_col
-  } else {
-    df1$ind_col = rep(1,length(ind_names))
-  }
+  df1 = data.frame(ind,Y,ind_col)
   df2 = data.frame(y1 = r[,1], y2 = r[,2])
-  if (is.null(var_col)){
-    var_col = rep("red",length(var_names))
-  }
   g = ggplot(data = df1, aes(comp1,comp2))+
       geom_vline(xintercept = 0) +
       geom_hline(yintercept = 0) + 
-      # geom_text_repel(aes(colour = ind_col, label = ind_names)) +
-      geom_point(aes(colour = ind_col)) +
-      geom_label_repel(label = round(100*atrophy,1),label.size = 0.25,size = 2) +
-      scale_fill_gradient(low = "yellow", high = "brown") +
-      # geom_text(data = df2, aes(y1,y2, label = var_names, colour = var_col)) +
+      # geom_text_repel(aes(colour = ind_col, label = ind_labels)) +
+      geom_point(aes(colour = ind_col), size = ind_size) +
+      scale_colour_gradient(low = "yellow", high = "brown") +
+      # geom_label_repel(label = round(100*atrophy,1),label.size = 0.25,size = 2) +
+      # geom_text(data = df2, aes(y1,y2, label = var_labels, colour = var_col)) +
+      geom_text_repel(data = df2, aes(y1,y2, label = var_labels), colour = var_col) +
       ggtitle(main)    
   
   if (arrows == TRUE){
     g = g + geom_segment(data = df2, aes(x = 0, y = 0, xend = y1, yend = y2), 
-                         arrow=arrow(length=unit(0.2,"cm")), colour = var_col) +
-      geom_text_repel(data = df2, aes(y1,y2, label = var_names))
-
-  }
-  
+                         arrow=arrow(length=unit(0.2,"cm")), colour = var_col) 
+  } 
   g
   return(g)
 }

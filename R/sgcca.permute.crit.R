@@ -76,19 +76,27 @@ sgcca.permute.crit = function(A,
     n_cores = parallel::detectCores()-1
     e=environment()
     cl = parallel::makeCluster(n_cores)
-    parallel::clusterExport(cl,c("A","c1s","nperm","C","ncomp","scheme","out","crit","crits","tol"),envir = e)
-    parallel::clusterEvalQ(cl, library(devtools))
-    tryCatch({parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))},
-             error = function(e) {warning("error : probably an issue with the localisation of RGCCA functions")})
-    permcrit = tryCatch({parallel::parSapply(cl,1:nperm,     # Close cluster even if there is an error or a warning with sgcca.crit
-                                   function(x) sgcca.crit(A = A, 
-                                                          C = C, 
-                                                          c1s = c1s, 
-                                                          ncomp = ncomp, 
-                                                          scheme = scheme, 
-                                                          tol = tol, 
-                                                          crit = crit))},
-             error = function(e) {warning("an error occured with sgcca.crit"); return(NULL) })
+    parallel::clusterExport(cl,c("A","c1s","nperm","C","ncomp","scheme","out","crit","crits","tol","sgcca.crit"),envir = e)
+    parallel::clusterEvalQ(cl, library(RGCCA))
+    # tryCatch({parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))},
+    #          error = function(e) {warning("error : probably an issue with the localisation of RGCCA functions")})
+    # permcrit = tryCatch({parallel::parSapply(cl,1:nperm,     # Close cluster even if there is an error or a warning with sgcca.crit
+    #                                function(x) sgcca.crit(A = A, 
+    #                                                       C = C, 
+    #                                                       c1s = c1s, 
+    #                                                       ncomp = ncomp, 
+    #                                                       scheme = scheme, 
+    #                                                       tol = tol, 
+    #                                                       crit = crit))},
+    #          error = function(e) {warning("an error occured with sgcca.crit"); return(NULL) })
+    # parallel::clusterEvalQ(cl, load_all("RGCCA/R/."))
+    permcrit = parallel::parSapply(cl,1:nperm,function(x) sgcca.crit(A = A,
+                                                                     C = C,
+                                                                     c1s = c1s,
+                                                                     ncomp = ncomp,
+                                                                     scheme = scheme,
+                                                                     tol = tol,
+                                                                     crit = crit))
     parallel::stopCluster(cl)
     if (is.null(permcrit)){return(NULL)} 
   } else {
