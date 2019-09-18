@@ -68,7 +68,9 @@ rgcca.biplot = function(object,
                         expand = 1,
                         show_r_square = FALSE,
                         main = NULL,
-                        arrows = TRUE){
+                        arrows = TRUE,
+                        shorten_label = T,
+                        target = NULL){
   if (dim(object$Y[[superbloc_pos]])[2] < 2){
     return("Two components on the superbloc are required for the biplot")
   } else {
@@ -95,6 +97,20 @@ rgcca.biplot = function(object,
   rangy1 <- unsigned.range(r[, 1L])
   rangy2 <- unsigned.range(r[, 2L])
   
+  if (shorten_label == T){
+    library(stringr)
+    shorten_label = function(x){
+      if (str_length(x) >10){
+        return(str_c(str_sub(x,1,10),"..."))
+      } else {
+        return(x)
+      }
+    }
+    var_labels = vapply(var_labels,shorten_label,"a")
+  }
+  
+  
+  
   ratio <- max(rangy1/rangx1, rangy2/rangx2)/expand
   r=r*ratio
   df1 = data.frame(ind,Y,ind_col)
@@ -114,6 +130,11 @@ rgcca.biplot = function(object,
     g = g + geom_segment(data = df2, aes(x = 0, y = 0, xend = y1, yend = y2), 
                          arrow=arrow(length=unit(0.2,"cm")), colour = var_col) 
   } 
+  if (!is.null(target)){
+    g = g + geom_segment(data = target, aes(x = 0, y = 0, xend = x, yend = y),
+                             arrow=arrow(length=unit(0.2,"cm")), colour = 1)
+    g = g + geom_text_repel(data = target, aes(x,y, label = rownames(target)), colour = 1)
+  }
   g
   return(g)
 }
