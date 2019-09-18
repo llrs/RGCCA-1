@@ -14,6 +14,9 @@ rgcca.entry = function(X,rownames = NULL, labels = NULL, batch = NULL, outliers 
   if (!is.null(outliers)){
     rownames = setdiff(rownames,outliers)
   } 
+  if (!is.null(labels)){
+    rownames = intersect(rownames,rownames(labels))
+  }
   A = lapply(X, function(x) x[rownames,])
   if (!is.null(labels)){
     if (!is.null(batch)){
