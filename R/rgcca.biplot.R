@@ -120,6 +120,7 @@ rgcca.biplot = function(object,
       geom_hline(yintercept = 0) + 
       # geom_text_repel(aes(colour = ind_col, label = ind_labels)) +
       geom_point(aes(colour = ind_col), size = ind_size) +
+      # geom_label_repel(label = round(100*ind,1)) +
       scale_colour_gradient(low = "yellow", high = "brown") +
       # geom_label_repel(label = round(100*atrophy,1),label.size = 0.25,size = 2) +
       # geom_text(data = df2, aes(y1,y2, label = var_labels, colour = var_col)) +
