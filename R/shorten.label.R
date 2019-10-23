@@ -1,4 +1,5 @@
 shorten.label = function(x){
+  library(stringr)
   if (stringr::str_length(x) >25){
     return(stringr::str_c(str_sub(x,1,25),"..."))
   } else {

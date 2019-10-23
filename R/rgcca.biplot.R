@@ -109,8 +109,6 @@ rgcca.biplot = function(object,
     var_labels = vapply(var_labels,shorten_label,"a")
   }
   
-  
-  
   ratio <- max(rangy1/rangx1, rangy2/rangx2)/expand
   r=r*ratio
   df1 = data.frame(ind,Y,ind_col)
@@ -118,14 +116,18 @@ rgcca.biplot = function(object,
   g = ggplot(data = df1, aes(comp1,comp2))+
       geom_vline(xintercept = 0) +
       geom_hline(yintercept = 0) + 
-      # geom_text_repel(aes(colour = ind_col, label = ind_labels)) +
-      geom_point(aes(colour = ind_col), size = ind_size) +
       # geom_label_repel(label = round(100*ind,1)) +
-      scale_colour_gradient(low = "yellow", high = "brown") +
       # geom_label_repel(label = round(100*atrophy,1),label.size = 0.25,size = 2) +
       # geom_text(data = df2, aes(y1,y2, label = var_labels, colour = var_col)) +
       geom_text_repel(data = df2, aes(y1,y2, label = var_labels), colour = var_col) +
       ggtitle(main)    
+  if (is.integer(ind_col)){
+    # g = g + geom_point(aes(colour = as.factor(ind_col)), size = ind_size) +
+    g = g + geom_text(aes(colour = ind_col, label = ind_labels))
+  }else{
+    g = g + geom_point(aes(colour = ind_col), size = ind_size) +
+      scale_colour_gradient(low = "yellow", high = "brown") 
+  }
   
   if (arrows == TRUE){
     g = g + geom_segment(data = df2, aes(x = 0, y = 0, xend = y1, yend = y2), 
