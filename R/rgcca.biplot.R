@@ -123,7 +123,7 @@ rgcca.biplot = function(object,
       ggtitle(main)    
   if (is.integer(ind_col)){
     # g = g + geom_point(aes(colour = as.factor(ind_col)), size = ind_size) +
-    g = g + geom_text(aes(colour = ind_col, label = ind_labels))
+    g = g + geom_point(aes(colour = ind_col, size = ind_size))
   }else{
     g = g + geom_point(aes(colour = ind_col), size = ind_size) +
       scale_colour_gradient(low = "yellow", high = "brown") 
