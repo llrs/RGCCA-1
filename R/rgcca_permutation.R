@@ -38,6 +38,9 @@ rgcca_permutation <- function(
     n_cores = parallel::detectCores() - 1,
     ...) {
 
+    check_integer("nperm", nperm)
+    check_integer("n_cores", n_cores, 0)
+
     if (any(p_ncomp == FALSE) && any(p_spars == FALSE))
         stop("Select one parameter among 'p_spars' or 'p_ncomp' to optimize. By default, p_spars is selected.")
 
