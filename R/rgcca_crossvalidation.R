@@ -48,11 +48,6 @@ rgcca_crossvalidation <- function(
 
             Atrain <- lapply(bigA, function(x) x[-inds, , drop = FALSE])
 
-            if (rgcca$call$type %in% c("spls", "spca", "sgcca"))
-                tau <- rgcca$call$c1
-            else
-                tau <- rgcca$call$tau
-
             if (rgcca$call$superblock) {
                 Atrain <- Atrain[-length(Atrain)]
                 rgcca$call$connection <- NULL
@@ -61,22 +56,30 @@ rgcca_crossvalidation <- function(
             if (!is.null(rgcca$call$response))
                 response <- length(rgcca$call$blocks)
 
-            rgcca_k <- rgcca(
-                Atrain,
-                rgcca$call$connection,
-                response = response,
-                superblock = rgcca$call$superblock,
-                tau = tau,
-                ncomp = rgcca$call$ncomp,
-                scheme = rgcca$call$scheme,
-                scale = FALSE,
-                type = rgcca$call$type,
-                verbose = FALSE,
-                init = rgcca$call$init,
-                bias = rgcca$call$bias,
-                tol = rgcca$call$tol,
-                method = "complete"
+            func <- quote(
+                rgcca(
+                    Atrain,
+                    rgcca$call$connection,
+                    response = response,
+                    superblock = rgcca$call$superblock,
+                    ncomp = rgcca$call$ncomp,
+                    scheme = rgcca$call$scheme,
+                    scale = FALSE,
+                    type = rgcca$call$type,
+                    verbose = FALSE,
+                    init = rgcca$call$init,
+                    bias = rgcca$call$bias,
+                    tol = rgcca$call$tol,
+                    method = "complete"
+                )
             )
+
+            if (rgcca$call$type %in% c("spls", "spca", "sgcca"))
+                func$sparsity <- rgcca$call$c1
+            else
+                func$tau <- rgcca$call$tau
+
+            rgcca_k <- eval(as.call(func))
 
             rgcca_k$a <- check_sign_comp(rgcca, rgcca_k$a)
 
@@ -92,7 +95,6 @@ rgcca_crossvalidation <- function(
         }
     )
 
-    #bigA <- rgcca$call$blocks
     bigA <- intersection(rgcca$call$blocks)
 
     if (validation == "loo")

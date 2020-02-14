@@ -57,7 +57,7 @@ rgcca <- function(
 
     if (tolower(type) %in% c("sgcca", "spca", "spls")) {
         if (!missing(tau))
-           stop(paste0("penalty parameter required for ", tolower(type), "."))
+           stop(paste0("sparsity parameter required for ", tolower(type), "."))
         gcca <- sgccaNa
         par <- "c1"
         penalty <- sparsity
