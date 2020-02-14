@@ -183,12 +183,15 @@ rgcca_permutation <- function(
             return(z)
         })
 
-    list(
-        pvals = pvals,
-        zstat = zs,
-        bestpenalties = par[which.max(zs), ],
-        permcrit = permcrit,
-        crit = crits,
-        penalties = par
+    structure(
+        list(
+            pvals = pvals,
+            zstat = zs,
+            bestpenalties = par[which.max(zs), ],
+            permcrit = permcrit,
+            crit = crits,
+            penalties = par
+        ),
+        class = "permutation"
     )
 }
