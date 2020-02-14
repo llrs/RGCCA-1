@@ -43,8 +43,6 @@ rgcca_crossvalidation <- function(
 
     bloc_to_pred <- names(rgcca$call$blocks)[i_block]
 
-    match.arg(validation, c("test", "kfold", "loo"))
-
     f <- quote(
         function(){
 

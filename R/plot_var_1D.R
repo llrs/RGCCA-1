@@ -41,7 +41,7 @@ plot_var_1D <- function(
     colors = NULL,
     ...) {
 
-    check_ncol(rgcca$a, i_block)
+    colors <- check_colors(colors)
 
     df <- get_ctr2(
         rgcca = rgcca,
