@@ -50,7 +50,6 @@ plot2D <- function(
     
     title <- paste0(title, collapse = " ")
     name_group <- paste0(title, collapse = " ")
-    colors <- check_colors(colors)
     for (i in c("cex", "cex_main", "cex_sub", "cex_point", "cex_lab"))
         check_integer(i, get(i))
     for (i in c("text", "no_overlap"))
@@ -130,6 +129,8 @@ plot2D <- function(
 
     if (is.null(colors))
         colours <- c("blue", "gray", "#cd5b45")
+    else
+        check_colors(colors)
 
     if (length(unique(group)) != 1 && is(df, "d_var2D")) {
         order_color(rgcca$a, p, collapse = collapse, colors)

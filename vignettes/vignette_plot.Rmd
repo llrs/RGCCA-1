@@ -190,7 +190,7 @@ plot_ind(rgcca_out)
 
 ### Corcircle plot
 ```{r}
-plot_var_2D(rgcca_out)
+#plot_var_2D(rgcca_out)
 ```
 
 ### Fingerprint plot
