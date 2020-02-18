@@ -28,6 +28,7 @@ plot_bootstrap_1D <- function(
     x = "estimate",
     y = "occurrences",
     n = 50,
+    b0=NULL,
     title = paste0(attributes(b)$indexes[[x]],
                    "\n(",
                    attributes(b)$n_boot,
@@ -53,7 +54,11 @@ plot_bootstrap_1D <- function(
     else
         group = NA
 
-    b <- head(b, n)
+    b <- head(
+        data.frame(
+            order_df(b[, -NCOL(b)], x, allCol = TRUE),
+            order = NROW(b):1),
+        n)
     p <- ggplot(
         b,
         aes(x = order,
@@ -72,6 +77,19 @@ plot_bootstrap_1D <- function(
     if (x == "estimate")
         p <- p +
             geom_errorbar(aes(ymin = lower_band, ymax = upper_band))
+
+    # if (x == "occurrences")
+    # {
+    #     if(!is.null(b0))
+    #     nboot= attributes()
+    #     nzero=sapply(1:nboot,function(i) {sum(b0$bootstrap[[i]][[i_block]][,1]==0)})
+    #     nvar=length(b0$boostrap[[1]][[i_block]][,1])
+    #     p=mean((nvar-nzero))/nvar
+    #     q1=qbinom(size=100,prob=0.1,p=0.05/nvar,lower.tail = FALSE)
+    #     q2=qbinom(size=100,prob=0.1,p=0.01/nvar,lower.tail = FALSE)
+    #     q3=qbinom(size=100,prob=0.1,p=0.001/nvar,lower.tail = FALSE)
+    #     p+geom_hline(yintercept = c(q1/nboot,q2/nboot,q3/nboot),col=c("red","black","green"))
+    # }
 
     return(p)
 }

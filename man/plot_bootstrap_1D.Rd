@@ -5,7 +5,7 @@
 \title{Plot a bootstrap in 1D}
 \usage{
 plot_bootstrap_1D(b, x = "estimate", y = "occurrences", n = 50,
-  title = paste0(attributes(b)$indexes[[x]], "\\n(",
+  b0 = NULL, title = paste0(attributes(b)$indexes[[x]], "\\n(",
   attributes(b)$n_boot, " bootstraps)"),
   colors = c(color_group(seq(3))[1], "white", color_group(seq(3))[3]),
   ...)

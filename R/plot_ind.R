@@ -3,7 +3,7 @@
 #' Plot the two components of a RGCCA
 #'
 #' @inheritParams plot2D
-#' @param rgcca A list giving the results of a R/SGCCA
+#' @param rgcca_res A list giving the results of a R/SGCCA
 #' @param resp A vector of characters corresponding either to a qualitative
 #' variable with levels or a continuous variable
 #' @param compx An integer giving the index of the analysis component used
@@ -46,11 +46,11 @@
 #' plot_ind(result.rgcca,i_block=1)
 #' @export
 plot_ind <- function(
-    rgcca,
-    resp = rep(1, NROW(rgcca$Y[[1]])),
+    rgcca_res,
+    resp = rep(1, NROW(rgcca_res$Y[[1]])),
     compx = 1,
     compy = 2,
-    i_block = length(rgcca$Y),
+    i_block = length(rgcca_res$Y),
     text = TRUE,
     i_block_y = i_block,
     reponse_name = "Response",
@@ -62,12 +62,12 @@ plot_ind <- function(
     if (is.null(i_block_y))
         i_block_y <- i_block
 
-    check_ncol(rgcca$Y, i_block)
+    check_ncol(rgcca_res$Y, i_block)
 
-    resp <- check_response(resp, rgcca$Y)
+    resp <- check_response(resp, rgcca_res$Y)
 
     df <- get_comp(
-        rgcca = rgcca,
+        rgcca = rgcca_res,
         resp = resp,
         compx = compx,
         compy = compy,
@@ -90,7 +90,7 @@ plot_ind <- function(
 
 
     p <- plot2D(
-            rgcca,
+            rgcca_res,
             df,
             title,
             df$resp,
