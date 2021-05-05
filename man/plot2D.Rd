@@ -2,50 +2,64 @@
 % Please edit documentation in R/plot2D.R
 \name{plot2D}
 \alias{plot2D}
-\title{Plot of components space}
+\title{Plot RGCCA components in a bi-dimensional space}
 \usage{
-plot2D(rgcca, df, title = "Biplot", group, name_group = "Response",
-  compx = 1, compy = 2, i_block = NULL, p = NULL, text = TRUE,
-  i_block_y = i_block, colours = c("blue", "gray", "#cd5b45"),
-  collapse = FALSE, no_overlap = FALSE, cex = 1, cex_sub = 16 *
-  cex, cex_point = 3 * cex, cex_lab = 19 * cex)
+plot2D(
+  rgcca_res,
+  df,
+  title = "",
+  group = 1,
+  name_group = "Response",
+  compx = 1,
+  compy = 2,
+  i_block = 1,
+  p = NULL,
+  text = TRUE,
+  i_block_y = i_block,
+  colors = NULL,
+  collapse = FALSE,
+  no_overlap = FALSE,
+  cex = 1,
+  cex_main = 14 * cex,
+  cex_sub = 12 * cex,
+  cex_point = 3 * cex,
+  cex_lab = 10 * cex
+)
 }
 \arguments{
-\item{rgcca}{A list giving the results of a R/SGCCA}
+\item{rgcca_res}{A fitted RGCCA object (see  \code{\link[RGCCA]{rgcca}})}
 
-\item{df}{A dataframe}
+\item{df}{A data.frame}
 
-\item{title}{A character with the name of the space (either "Variables" or
-"Samples")}
+\item{title}{A character giving the title of the plot}
 
-\item{group}{A vector of character with levels used to color the points}
+\item{group}{A vector of character whose levels are used to color the points}
 
-\item{name_group}{A character giving the type of groups (either "Blocs" or
-"Response")}
+\item{name_group}{A character giving the type of groups (either "Blocks" or}
 
-\item{compx}{An integer giving the index of the analysis component used
-for the x-axis}
+\item{compx}{An integer giving the index of the block component for the x-axis}
 
-\item{compy}{An integer giving the index of the analysis component used
-for the y-axis}
+\item{compy}{An integer giving the index of the block component for the y-axis}
 
-\item{i_block}{An integer giving the index of a list of blocks}
+\item{i_block}{An integer giving the index of the block}
 
 \item{p}{A ggplot object}
 
-\item{text}{A bolean to represent the points with their row names (TRUE)
-or with circles (FALSE)}
+\item{text}{A logical value indicating if rowanmes are displayed (default = TRUE)}
 
-\item{i_block_y}{An integer giving the index of a list of blocks (another
-one, different from the one used in i_block)}
+\item{i_block_y}{An integer giving the index of the block (different from i_block)}
 
-\item{colours}{A vectof of character to color quantitative dat}
+\item{colors}{Either a vector of integers (each integer corresponding to a
+color) or of characters corresponding to names of colors (as "blue",see
+colors()) or RGB code ("#FFFFFF").}
 
-\item{collapse}{A boolean to combine the variables of each blocks as result}
+\item{collapse}{A boolean to combine the variables of each block as result}
 
-\item{no_overlap}{A boolean to avoid overlap in plotted text}
+\item{no_overlap}{A logical value indicating if text-overlappin is accepted}
 
 \item{cex}{An integer for the size of the plot parameters}
+
+\item{cex_main}{An integer for the size of the title}
 
 \item{cex_sub}{An integer for the size of the subtitle}
 
@@ -54,11 +68,5 @@ one, different from the one used in i_block)}
 \item{cex_lab}{An integer for the size of the axis titles}
 }
 \description{
-Plots RGCCA components in a bi-dimensional space
-}
-\examples{
-df = as.data.frame(matrix(runif(20*2, min = -1), 20, 2))
-AVE = lapply(seq(4), function(x) runif(2))
-rgcca_out = list(AVE = list(AVE_X = AVE))
-plot2D(rgcca_out, df, "Samples", rep(c("a","b"), each=10), "Response")
+Plot RGCCA components in a bi-dimensional space
 }

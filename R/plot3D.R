@@ -1,32 +1,13 @@
-#' Plot in 3 dimensions
-#' 
-#' Plot in 3 dimensions either to visualize the components of an analyse or the variables
-#' @inheritParams plot_ind
-#' @inheritParams plot2D
-#' @inheritParams get_comp
-#' @param type A character for the type of plot : either "ind" for individual plot or "var" for corcircle
-#' @examples
-#' library(RGCCA)
-#' data("Russett")
-#' blocks = list(agriculture = Russett[, seq(3)],
-#'     politic = Russett[, 6:11] )
-#' rgcca_out = rgcca.analyze(blocks, ncomp = rep(3, 2))
-#' df = get_comp(rgcca_out, compz = 3)
-#' plot3D(df, rgcca_out, i_block = 2)
-#' plot3D(df, rgcca_out, i_block = 2, text = FALSE)
-#' response = factor( apply(Russett[, 9:11], 1, which.max),
-#'                   labels = colnames(Russett)[9:11] )
-#' response = blocks[[2]][, 1]
-#' names(response) = row.names(blocks[[2]])
-#' df = get_comp(rgcca_out, response, compz = 3)
-#' plot3D(df, rgcca_out, i_block = 2, text = FALSE)
-#' plot3D(df, rgcca_out, i_block = 2)
-#' df = get_ctr2(rgcca_out, compz = 3, i_block = 1, collapse = TRUE)
-#' plot3D(df, rgcca_out, i_block = 2, type = "var")
-#' @export
+# Plot in 3 dimensions
+# 
+# Plot in 3 dimensions either to visualize the components of an analyse or the variables
+# @inheritParams plot_ind
+# @inheritParams plot2D
+# @inheritParams get_comp
+# @param type A character for the type of plot : either "ind" for individual plot or "var" for corcircle
 plot3D <- function(
     df,
-    rgcca,
+    rgcca_res,
     compx = 1,
     compy = 2,
     compz = 3,
@@ -35,24 +16,56 @@ plot3D <- function(
     i_block_z = i_block,
     text = TRUE,
     title = "Sample plot",
+    colors = NULL,
     type = "ind",
     cex = 1,
     cex_point = 3 * cex,
     cex_lab = 19 * cex) {
 
-    if (length(unique(df$resp)) == 1) {
-        df$resp = as.factor(rep("a", length(df$resp)))
-        midcol = "#cd5b45"
+    stopifnot(is(rgcca_res, "rgcca"))
+    check_boolean("text", text)
+    if (is.null(colors)) {
+        colors <- "#A50026"
+        colors[2] <- NA
+        colors[3] <- "#313695"
+    }else
+        check_colors(colors)
+    title <- paste0(title, collapse = " ")
+    match.arg(type, c("ind", "var"))
+    for (i in c("i_block", "i_block_y", "i_block_z"))
+            check_blockx(i, get(i), rgcca_res$call$blocks)
+    check_ncol(rgcca_res$Y, i_block)
+    for (i in c("compx", "compy", "compz")) {
+        if (!is.null(get(i)))
+            check_compx(i, get(i), rgcca_res$call$ncomp, i_block)
+    }
+    for (i in c("cex", "cex_point", "cex_lab"))
+        check_integer(i, get(i))
+
+    load_libraries("plotly")
+    `%>%` <- plotly::`%>%`
+
+    if (is.na(colors[2]) && length(unique(df$resp)) == 1) {
+        df$resp <- as.factor(rep("a", length(df$resp)))
+        midcol <- "#cd5b45"
     } else
-        midcol = "gray"
+        midcol <- "gray"
 
     axis <- function(x, i)
         list(
-                title = paste0("<i>", print_comp(rgcca, x, i), "</i>"),
+                title = paste0("<i>", print_comp(rgcca_res, x, i), "</i>"),
                 titlefont = list(
                         size = cex_lab * 0.75
                     )
             )
+
+   if(!is.character2(df$resp)){
+      if (is.null(colors)){
+        colors <- "#A50026"
+        colors[2] <- NA
+        colors[3] <- "#313695"
+      }
+   }
 
     color <- function(x){
         n <- length(x)
@@ -60,10 +73,10 @@ plot3D <- function(
             cut(
                 x,
                 breaks = n,
-                labels = colorRampPalette(c("#A50026", midcol,  "#313695"))(n),
+                labels = colorRampPalette(c(colors[1], colors[2], colors[3]))(n),
                 include.lowest = TRUE)
         else
-            color_group(seq(length(unique(df$resp))))
+            color_group(seq(length(unique(df$resp))), colors = colors)
     }
 
     subdf <- function(x) 
@@ -74,7 +87,7 @@ plot3D <- function(
         l <- levels(df$resp)
 
         func <- quote(
-            add_trace(
+            plotly::add_trace(
                 p,
                 name = l[x],
                 x = ~ subdf(x)[, 1],
@@ -85,7 +98,7 @@ plot3D <- function(
             )
         )
 
-        color <- color_group(seq(length(l)))[x]
+        color <- color_group(seq(length(l)), colors = colors)[x]
 
         if (text) {
             func$mode <- "text"
@@ -105,7 +118,6 @@ plot3D <- function(
         eval(func)
     }
 
-
     if (!is.character2(df$resp)) {
 
         if (text)
@@ -113,7 +125,7 @@ plot3D <- function(
         else
             visible <- TRUE
 
-        p <- plot_ly(
+        p <- plotly::plot_ly(
             name = "samples",
             x = ~ df[, 1],
             y = ~ df[, 2],
@@ -123,13 +135,13 @@ plot3D <- function(
             showlegend = FALSE,
             color = df$resp,
             size = I(200),
-            colors = c("#A50026", midcol,  "#313695"),
+            colors = c(colors[1], colors[2], colors[3]),
             visible = visible
         )
 
         if (text) {
             p <- p %>%
-                add_trace(
+              plotly::add_trace(
                     name = "samples",
                     x = ~ df[, 1],
                     y = ~ df[, 2],
@@ -147,14 +159,14 @@ plot3D <- function(
         }
 
     }else{
-        p <- plot_ly()
+        p <- plotly::plot_ly()
         
         for (i in seq(length(levels(df$resp))))
             p <- p %>% add_trace_manual(i)
     }
 
     p <- p %>%
-        layout(
+      plotly::layout(
             autosize = TRUE,
             margin = list(
                 l = 50,
@@ -179,7 +191,7 @@ plot3D <- function(
 
     plot_circle3D <- function(p, x, y, z){
         df <- cbind(plot_circle(), 0)
-        add_trace(
+        plotly::add_trace(
             p = p,
             x = df[, x],
             y = df[, y],

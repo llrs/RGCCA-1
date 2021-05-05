@@ -1,11 +1,11 @@
 # Author: Etienne CAMENEN
-# Date: 2019
+# Date: 2020
 # Contact: arthur.tenenhaus@l2s.centralesupelec.fr
 # Key-words: omics, RGCCA, multi-block
 # EDAM operation: analysis, correlation, visualisation
 #
 # Abstract: Performs multi-variate analysis (PCA, CCA, PLS, R/SGCCA, etc.)
-# and produces textual and graphical outputs (e.g. variables and individuals
+# and produces textual and graphical outputs (e.g. variables and samples
 # plots).
 
 rm(list = ls())
@@ -44,8 +44,8 @@ multiple_blocks_super  <<- c(
     )
 analyse_methods  <<- list(one_block, two_blocks, multiple_blocks, multiple_blocks_super)
 reac_var  <<- reactiveVal()
-id_block_y <<- id_block <<- id_block_resp <<- analysis <<- 
-boot <<- analysis_type <<- crossval <<- selected.var <<- NULL
+id_block_y <<- id_block <<- id_block_resp <<- analysis <<- connection <<- perm <<- boot <<-
+boot <<- analysis_type <<- crossval <<- selected.var <<- crossval <<- blocks_without_superb <<- NULL
 clickSep <<- FALSE
 if_text <<- TRUE
 compx <<- 1
@@ -54,6 +54,12 @@ nb_mark <<- 100
 BSPLUS <<- R.Version()$minor >= 3
 ax2 <<- list(linecolor = "white",
         tickfont = list(size = 10, color = "grey"))
+CEX_LAB <<- 15
+CEX_MAIN <<- 15
+CEX_POINT <<- 3
+CEX_SUB <<- 10
+CEX_AXIS <<- 10
+CEX <<- 1
 
 # config for shinyapps.io
 appDir <- ifelse("packrat" %in% list.files(), "", "../../R/")
@@ -66,7 +72,6 @@ for (f in list.files(appDir))
 # rcon-pca, ridge-gca, , ssqcov-1, ssqcov-2, , sum-pca, sumcov-1, sumcov-2
 
 load_libraries(c(
-    "RGCCA",
     "ggplot2",
     "scales",
     "igraph",
@@ -74,7 +79,9 @@ load_libraries(c(
     "visNetwork",
     "shiny",
     "shinyjs",
-    "MASS"
+    "MASS",
+    "rlang",
+    "DT"
 ))
 
 if (BSPLUS) {
@@ -87,22 +94,32 @@ if (BSPLUS) {
 ui <- fluidPage(
     titlePanel("R/SGCCA - The Shiny graphical interface"),
     tags$div(
-        tags$strong("Authors: "),
         tags$p(
             "Etienne CAMENEN, Ivan MOSZER, Arthur TENENHAUS (",
             tags$a(href = "arthur.tenenhaus@l2s.centralesupelec.fr",
             "arthur.tenenhaus@l2s.centralesupelec.fr"),
             ")"
-        )
+        ),
+        tags$i("Multi-block data analysis concerns the analysis of several sets of variables (blocks) observed on the same group of samples. The main aims of the RGCCA package are: to study the relationships between blocks and to identify subsets of variables of each block which are active in their relationships with the other blocks."),
+        tags$br(), tags$br()
     ),
-    tags$a(href = "https://github.com/BrainAndSpineInstitute/rgcca_Rpackage/blob/master/inst/shiny/tutorialShiny.md", "Go to the tutorial"),
+    tags$a(href = "https://github.com/rgcca-factory/RGCCA/blob/release/3.0.0/inst/shiny/tutorialShiny.md", "Go to the tutorial"),
+    tags$strong("|"),
+    tags$a(href = "https://www.youtube.com/watch?v=QCkEBsoP-tc", "Watch a demo", target = "_blank"),
+    tags$br(), tags$br(),
+    tags$style(".fa-camera {color:#c7c7c7}"),
+    tags$style(".fa-camera:hover {color:#7c7c7c}"),
+    tags$style("#connection_save, #ave_save {border-color:white; left: 0%}"),
+    tags$style("#connection_save:hover, #ave_save:hover {background-color:white}"),
+    tags$style("#connection_save:focus, #ave_save:focus {outline:none; background-color:white}"),
+    tags$style("#connection_save:active, #ave_save:active {box-shadow:none}"),
+    tags$style(".js-plotly-plot .plotly .modebar {left: 0%}"),
     useShinyjs(),
     sidebarLayout(sidebarPanel(
         tabsetPanel(
             id = "tabset",
             tabPanel(
                 "Data",
-
                 uiOutput("file_custom"),
                 uiOutput("sep_custom"),
                 checkboxInput(
@@ -118,7 +135,7 @@ ui <- fluidPage(
             tabPanel(
                 "RGCCA",
                 uiOutput("analysis_type_custom"),
-                uiOutput("nb_compcustom"),
+                
                 uiOutput("scale_custom"),
                 radioButtons(
                     "init",
@@ -134,59 +151,81 @@ ui <- fluidPage(
                     label = "Supervised analysis",
                     value = FALSE
                 ),
-
                 conditionalPanel(
                     condition = "input.supervised || input.analysis_type == 'RA'",
                     uiOutput("blocks_names_response")),
-
                 uiOutput("connection_custom"),
-                uiOutput("tau_opt_custom"),
-                uiOutput("tau_custom"),
-                uiOutput("scheme_custom"),
-                actionButton(inputId = "run_analysis",
-                    label = "Run analysis"),
-                sliderInput(
-                    inputId = "nboot",
-                    label = "Number of boostraps",
-                    min = 5,
-                    max = 100,
-                    value = 10,
-                    step = 5
+                
+                checkboxInput(
+                    inputId = "each_ncomp",
+                    label = "Number of components for each block",
+                    value = FALSE
                 ),
+                uiOutput("nb_compcustom"),
+
+                uiOutput("tau_opt_custom"),
+                uiOutput("each_tau_custom"),
+                uiOutput("tau_custom"),
+                uiOutput("tune_type_custom"),
+                uiOutput("val_custom"),
+                sliderInput(
+                    inputId = "ncv",
+                    label = "Number of cross-validation",
+                    min = 1,
+                    max = 100,
+                    value = 1,
+                    step = 1
+                ),
+                sliderInput(
+                    inputId = "kfold",
+                    label = "Number of folds",
+                    min = 2,
+                    max = 10,
+                    value = 5,
+                    step = 1
+                ),
+                actionButton(
+                    inputId = "run_crossval",
+                    label = "Run cross-validation"),
+                uiOutput("nperm_custom"),
+                actionButton(inputId = "run_perm",
+                    label = "Run permutation"),
+                # sliderInput(
+                #     inputId = "power",
+                #     label = "Power of the factorial",
+                #     min = 2,
+                #     max = 6,
+                #     value = 2,
+                #     step = 1
+                # ),
+                uiOutput("scheme_custom"),
+                actionButton(
+                    inputId = "run_analysis",
+                    label = "Run analysis"),
+                uiOutput("nboot_custom"),
                 actionButton(inputId = "run_boot",
                     label = "Run bootstrap"),
-                radioButtons(
-                    "crossval",
-                    label = "Type of validation",
-                    choices = c(`Train-test` = "test",
-                                `K-fold` = "kfold",
-                                `Leave-one-out` = "loo"),
-                    selected = "loo"
-                ),
-                actionButton(inputId = "run_crossval",
-                    label = "Run cross-validation"),
-                sliderInput(
-                    inputId = "nperm",
-                    label = "Number of permutations",
-                    min = 5,
-                    max = 100,
-                    value = 10,
-                    step = 5
-                ),
-                radioButtons(
-                    "perm",
-                    label = "Type of permutation",
-                    choices = c(`Number of components` = 1,
-                                `Sparsity` = 2),
-                ),
-                actionButton(inputId = "run_perm",
-                    label = "Run permutation")
+                actionButton(
+                    inputId = "run_crossval_single",
+                    label = "Evaluate the model")
             ),
 
             # Graphical parameters
 
             tabPanel(
                 "Graphic",
+                radioButtons(
+                    "format",
+                    label = "Output image format",
+                    choices = c(
+                        `jpeg` = "jpeg",
+                        `png` = "png"
+                        #`svg` = "svg"
+                        # `tiff` = "tiff",
+                        # `pdf` = "pdf"
+                    ),
+                    selected = "png"
+                ),
                 checkboxInput(
                     inputId = "text",
                     label = "Display names",
@@ -203,6 +242,15 @@ ui <- fluidPage(
                     label = "Display cross-validation",
                     value = TRUE
                 ),
+                radioButtons(
+                    "indexes",
+                    label = "Type of indexes",
+                    choices = c(
+                        Correlation = "loadings",
+                        Weights = "weight")
+                ),
+                uiOutput("b_x_custom"),
+                uiOutput("b_y_custom"),
                 actionButton(inputId = "save_all", label = "Save all")
             )
 
@@ -215,22 +263,22 @@ ui <- fluidPage(
             id = "navbar",
             tabPanel(
                 "Connection",
-                visNetworkOutput("connectionPlot"),
-                actionButton("connection_save", "Save")
+                actionButton("connection_save", "", icon = icon("camera")),
+                visNetworkOutput("connectionPlot")
             ),
             tabPanel(
                 "AVE",
-                plotOutput("AVEPlot"),
-                actionButton("ave_save", "Save")
+                actionButton("ave_save", "", icon = icon("camera")),
+                plotOutput("AVEPlot")
             ),
             tabPanel(
                 "Samples",
-                plotlyOutput("samplesPlot", height = 700),
+                plotlyOutput("samplesPlot", height = 500),
                 actionButton("samples_save", "Save")
             ),
             tabPanel(
                 "Corcircle",
-                plotlyOutput("corcirclePlot"),
+                plotlyOutput("corcirclePlot", height = 500),
                 actionButton("corcircle_save", "Save")
             ),
             tabPanel(
@@ -244,11 +292,26 @@ ui <- fluidPage(
                 actionButton("bootstrap_save", "Save")
             ),
             tabPanel(
+                "Bootstrap Summary",
+                DT::dataTableOutput("bootstrapTable"),
+                actionButton("bootstrap_t_save", "Save")
+            ),
+            tabPanel(
                 "Permutation",
-                dataTableOutput("permutationPlot"),
+                plotlyOutput("permutationPlot", height = 700)
                 # actionButton("permutation_save", "Save")
+            ),
+            tabPanel(
+                "Permutation Summary",
+                dataTableOutput("permutationTable"),
+                actionButton("permutation_t_save", "Save")
+            ),
+            tabPanel(
+                "Cross-validation",
+                plotlyOutput("cvPlot", height = 700)
+                #actionButton("cv_save", "Save")
             )
-        )
+        )   
 
     ))
 )

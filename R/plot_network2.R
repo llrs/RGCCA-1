@@ -1,25 +1,38 @@
 #' Plot the connection between blocks (dynamic plot)
 #' 
 #' @inheritParams plot_ind
+#' @inheritParams plot2D
 #' @return A dataframe with tuples of connected blocks
 #' @examples
 #' library(visNetwork)
-#' library(RGCCA)
 #' data("Russett")
 #' blocks = list(agriculture = Russett[, seq(3)], industry = Russett[, 4:5],
 #'     politic = Russett[, 6:11] )
-#' rgcca_out = rgcca.analyze(blocks)
+#' rgcca_out = rgcca(blocks)
 #' plot_network2(rgcca_out)
 #' @export
-plot_network2 <- function(rgcca) {
+plot_network2 <- function(
+    rgcca_res,
+    title = paste0("Common rows between blocks : ",
+                        NROW(rgcca_res$call$blocks[[1]])),
+    cex = 1,
+    cex_main = 14 * cex,
+    cex_point = 3 * cex,
+    colors =  c("#eee685", "gray")) {
 
-    nodes <- get_nodes(rgcca)
-    edges <- get_edges(rgcca)
+    stopifnot(is(rgcca_res, "rgcca"))
+    title <- paste0(title, collapse = " ")
+    check_colors(colors)
+    if (length(colors) < 2)
+        colors <- c(colors, "gray")
+
+    load_libraries("visNetwork")
+    `%>%` <- magrittr::`%>%`
+
+    nodes <- get_nodes(rgcca_res)
+    edges <- get_edges(rgcca_res)
 
     par <- ifelse("sparsity" %in% names(nodes), "sparsity", "tau")
-
-    if (all(is.na(nodes[, par])))
-        nodes[, par] <- rep("optimal", length(rgcca$blocks))
 
     nodes$title <- nodes$id
     nodes$label <- paste(nodes$id,
@@ -32,30 +45,30 @@ plot_network2 <- function(rgcca) {
             sep = " ")
 
     edges$width <- edges$weight * 2
-    nodes$color.background <- rep("#eee685", length(rgcca$blocks))
+    nodes$color.background <- rep(as.vector(colors[1]), length(rgcca_res$call$blocks))
 
-    visNetwork(
+    visNetwork::visNetwork(
         nodes,
         edges,
         main = list(
-            text = paste0("Common rows between blocks : ",
-                        NROW(rgcca$blocks[[1]])),
-            style = "font-family:sans;font-weight:bold;font-size:28px;text-align:center;"
+            text = title,
+            style = paste0("font-family:sans;font-weight:bold;font-size:", cex_main * 1.4, "px;text-align:center;")
         )
-    ) %>%
-        visNodes(
-            borderWidth = 2,
-            shape = "square",
-            shadow = TRUE,
-            color = list(
-                border = "gray",
-                highlight = list(background = "black", border = "darkred")
-            )
-        ) %>% visEdges(
-            smooth = FALSE,
-            shadow = TRUE,
-            dashes = TRUE,
-            color = list(color = "gray", highlight = "darkred")
+    ) %>% visNetwork::visNodes(
+        borderWidth = 2,
+        shape = "square",
+        shadow = TRUE,
+        size = cex_point * 7.5,
+        font = list(size = cex * 14),
+        color = list(
+            border = colors[2],
+            highlight = list(background = "black", border = "darkred")
         )
+    ) %>% visNetwork::visEdges(
+        smooth = FALSE,
+        shadow = TRUE,
+        dashes = TRUE,
+        color = list(color = colors[2], highlight = "darkred")
+    )
 
 }

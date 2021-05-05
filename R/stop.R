@@ -1,7 +1,7 @@
-stop <- function(
-    message,
-    exit_code = "1",
-    call = NULL) {
+stop_rgcca <- function(
+message,
+exit_code = "1",
+call = NULL) {
 
     base::stop(
         structure(

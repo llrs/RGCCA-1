@@ -1,13 +1,13 @@
 # Default theme for ggplot
-theme_perso <- function(cex = 1, cex_sub = 16 * cex) {
+theme_perso <- function(cex = 1, cex_main = 12 * cex, cex_sub = 10 * cex) {
     theme(
-        legend.text = element_text(size = 13 * cex),
+        legend.text = element_text(size = 10 * cex),
         legend.title = element_text(face = "bold.italic", size = cex_sub ),
         plot.title = element_text(
-            size = 25 * cex,
+            size = cex_main,
             face = "bold",
             hjust = 0.5,
-            margin = margin(0, 0, 20, 0)
+            margin = margin(0, 0, 0, 0)
         )
     )
 }

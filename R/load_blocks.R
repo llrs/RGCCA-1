@@ -2,10 +2,10 @@
 #'
 #' @param file A character giving the path of a file
 #' @param names A character giving a list of names for the blocks
-#' @param sep A character giving the column separator
+#' @param separator A character giving the column separator
+#' @param decimal A character giving the decimal separator
 #' @param header A bolean giving the presence or the absence of the header
-#' @param rownames An integer corresponding to the column number of the row
-#' names (NULL otherwise)
+#' @param rownames An integer corresponding to the column number of the rownames (NULL otherwise)
 #' @return A list matrix corresponding to the blocks
 #' @examples
 #' \dontrun{
@@ -14,11 +14,13 @@
 #'     "agric,ind,polit")
 #' }
 #' @export
-load_blocks <- function(file,
+load_blocks <- function(
+    file,
     names = NULL,
-    sep = "\t",
+    separator = "\t",
     header = TRUE,
-    rownames = 1) {
+    rownames = 1,
+    decimal = ".") {
 
     # Parse args containing files path
     isXls <- (length(grep("xlsx?", file)) == 1)
@@ -28,11 +30,9 @@ load_blocks <- function(file,
         block_filenames <- char_to_list(file)
     else {
         # # if xls, check file exists
-        # check_file(file)
-        # # load the xls
-        # wb = loadWorkbook(file)
+        check_file(file)
         # # load the blocks
-        # block_filenames = names(getSheets(wb))
+        block_filenames = openxlsx::getSheetNames(file)
     }
 
     # Parse optional names of blocks
@@ -52,7 +52,6 @@ load_blocks <- function(file,
     for (i in seq(length(block_filenames))) {
         if (!isXls) {
             fi <- block_filenames[i]
-            check_file(fi)
         }
 
         #Get names of blocs
@@ -68,12 +67,12 @@ load_blocks <- function(file,
                 fo <- block_filenames[i]
         }
 
-        df <- load_file(file, fi, sep, block_filenames[i], rownames, header)
+        df <- load_file(file, fi, separator, block_filenames[i], rownames, header, decimal = decimal)
 
-        check_quantitative(df, fo, header)
+        check_quantitative(df[, -rownames], fo, header, warn_separator = TRUE)
         blocks[[fo]] <- df
     }
 
-    blocks <- check_blocks(blocks, init = TRUE)
+    blocks <- check_blocks(blocks, init = TRUE, allow_unnames = FALSE, no_character = TRUE)
 
 }

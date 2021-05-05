@@ -1,37 +1,48 @@
 #' Plot the connection between blocks
 #' 
 #' @inheritParams plot_ind
+#' @inheritParams plot2D
 #' @return A dataframe with tuples of connected blocks
 #' @examples
 #' library(igraph)
-#' library(RGCCA)
 #' data("Russett")
 #' blocks = list(agriculture = Russett[, seq(3)], industry = Russett[, 4:5],
 #'     politic = Russett[, 6:11] )
-#' rgcca_out = rgcca.analyze(blocks)
+#' rgcca_out = rgcca(blocks)
 #' plot_network(rgcca_out)
 #' @export
-plot_network <- function(rgcca) {
+plot_network <- function(
+    rgcca_res, 
+    title = paste0("Common rows between blocks : ",
+                   NROW(rgcca_res$call$blocks[[1]])),
+    cex = 1,
+    cex_main = 14 * cex,
+    cex_point = 3 * cex,
+    colors =  c("#eee685", "gray60")) {
+
+    stopifnot(is(rgcca_res, "rgcca"))
+    title <- paste0(title, collapse = " ")
+    check_colors(colors)
+
+    load_libraries("igraph")
+
     # Avoid random
     set.seed(1)
+    `V<-` <- igraph::`V<-`
+    `E<-` <- igraph::`E<-`
     V <- E <- NULL
         
-    nodes <- get_nodes(rgcca)
-    edges <- get_edges(rgcca)
+    nodes <- get_nodes(rgcca_res)
+    edges <- get_edges(rgcca_res)
 
     par <- ifelse("sparsity" %in% names(nodes), "sparsity", "tau")
 
-    net <- graph_from_data_frame(
+    net <- igraph::graph_from_data_frame(
         d = edges,
         vertices = nodes,
         directed = FALSE)
 
-    if (all(is.na(nodes[, par]))) {
-        nodes[, par] <- rep("optimal", length(rgcca$blocks))
-        V(net)$tau <- rep(1, length(rgcca$blocks))
-    }
-
-    V(net)$color <- "khaki2"
+    V(net)$color <- as.vector(colors[1])
     V(net)$label <- paste(
         nodes$id,
         "\nP =",
@@ -43,18 +54,16 @@ plot_network <- function(rgcca) {
         sep = " ")
     V(net)$shape <- "square"
     E(net)$width <- E(net)$weight * 2
-
     plot(
         net,
-        cex.main = 5,
-        edge.color = "gray70",
+        edge.color = colors[2],
         edge.lty = 2,
-        vertex.frame.color = "gray50",
+        vertex.frame.color = colors[2],
+        vertex.label.cex = cex,
         vertex.label.color = "black",
         vertex.label.dist = 6,
         vertex.label.degree = 1.5,
-        vertex.size = 23,
-        main = paste0("Common rows between blocks : ", NROW(rgcca$blocks[[1]]))
+        vertex.size = cex_point * 7.5
     )
-
+     title(title, cex.main = cex_main * 0.1)
 }

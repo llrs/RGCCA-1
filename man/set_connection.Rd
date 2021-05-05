@@ -2,25 +2,27 @@
 % Please edit documentation in R/set_connection.R
 \name{set_connection}
 \alias{set_connection}
-\title{Create a matrix corresponding to a connection between the blocks}
+\title{Create either a superblock design matrix (if superblock = TRUE), or a
+supervised design matrix (if response != NULL) or a fully connected design
+matrix (if response == NULL and superblock == FALSE)}
 \usage{
-set_connection(blocks, superblock = FALSE)
+set_connection(blocks, superblock = FALSE, response = NULL)
 }
 \arguments{
-\item{blocks}{A list of matrix}
+\item{blocks}{A list that contains the J blocks of variables X1, X2, ..., XJ.
+Block Xj is a matrix of dimension n x p_j where n is the number of
+observations and p_j the number of variables.}
 
-\item{superblock}{A boolean giving the presence (TRUE) / absence (FALSE) of
-a superblock}
+\item{superblock}{Boolean indicating the presence of the superblock.
+Default = TRUE}
+
+\item{response}{Position of the response block}
 }
 \value{
-A matrix corresponding to the connection between the blocks
+A binary design matrix encoding the connection between the blocks
 }
 \description{
-Create a matrix corresponding to a connection between the blocks
-}
-\examples{
-\dontrun{
-blocks = lapply(seq(4), function(x) matrix(runif(47 * 5), 47, 5))
-set_connection (blocks, 'data/connection.tsv')
-}
+Create either a superblock design matrix (if superblock = TRUE), or a
+supervised design matrix (if response != NULL) or a fully connected design
+matrix (if response == NULL and superblock == FALSE)
 }

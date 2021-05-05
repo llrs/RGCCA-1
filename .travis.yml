@@ -1,10 +1,10 @@
 language: r
 
 r:
-  - oldrel
+  - 4.0
+  - 3.6
   - 3.5
   - 3.4
-  - 3.3
 
 git:
   depth: 1
@@ -23,13 +23,10 @@ r_packages:
   - igraph
   - ggrepel
   - devtools
-  - shiny
-  - shinyjs
-  - bsplus
   - vegan
 
 install:
-  - Rscript -e 'install.packages("devtools",repos = "http://cran.us.r-project.org")'
+  - Rscript -e 'install.packages("devtools",repos = "http://cran.wustl.edu")'
   - R -e 'devtools::install_deps(dep = T)'
 
 script:

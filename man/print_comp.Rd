@@ -4,10 +4,10 @@
 \alias{print_comp}
 \title{Print the variance of a component}
 \usage{
-print_comp(rgcca, n = NULL, i = NULL, outer = FALSE)
+print_comp(rgcca_res, n = 1, i = length(rgcca_res$AVE$AVE_X), outer = FALSE)
 }
 \arguments{
-\item{rgcca}{A list giving the results of a R/SGCCA}
+\item{rgcca_res}{A fitted RGCCA object (see  \code{\link[RGCCA]{rgcca}})}
 
 \item{n}{An integer giving the index of the analysis component}
 
@@ -16,22 +16,12 @@ print_comp(rgcca, n = NULL, i = NULL, outer = FALSE)
 \item{outer}{A boolean for ave plot case}
 }
 \value{
-A string for the variance on the component
+A character for the variance on the component
 }
 \description{
-Prints the percent of explained variance for a component of a block 
+Print the percent of explained variance for a component of a block
 (by default, the superblock or the last one) analysed by R/SGCCA
 }
-\examples{
-AVE = list(c(0.6, 0.5), c(0.7, 0.45))
-rgcca_out = list(AVE = list(AVE_X = AVE))
-# For the superblock (or the last block)
-print_comp(rgcca_out, 1)
-# "Axis 1 (70\%)"
-# For the first block
-print_comp(rgcca_out, 2, 1)
-# "Axis 2 (50\%)"
-}
 \seealso{
-\code{\link[RGCCA]{rgcca}}, \code{\link[RGCCA]{sgcca}}
+\code{\link[RGCCA]{rgccad}}, \code{\link[RGCCA]{sgcca}}
 }

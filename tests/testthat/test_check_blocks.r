@@ -1,41 +1,40 @@
-#'# check_blocks test
-
-#'''
-#  names of blocks
- rand_mat <- function(x) matrix(runif(9), 3, 3)
- A = lapply(1:3, rand_mat)
- A[[4]]=c(1,2,-1)
- try(check_blocks(A))
- geterrmessage()
- names(A) <- LETTERS[1:3]
- # importance of colnames
- try(check_blocks(A))
- geterrmessage()
- A=lapply(A,as.matrix)
- for(i in 1:length(A))
- {
-     colnames(A[[i]]) <- paste0("Block",i,"_var_",letters[1:(dim(A[[i]])[2])])
- }
-
- # Rownames should be present   
-A2= check_blocks(A)
-check_blocks(A2) 
-
-# when the blocks have not the same dimensions
-X1=matrix(rnorm(15),5,3);rownames(X1)=paste("S",1:5);colnames(X1)=letters[1:3]
-X2=matrix(rnorm(16),4,4);rownames(X2)=paste("S",c(1,2,5,4));colnames(X2)=letters[5:8]
-X3=matrix(rnorm(3),3,1);rownames(X3)=paste("S",c(5,1,3));colnames(X3)="z"
-A=list(X1,X2,X3)
-A2=check_blocks(A)
-A2=try(check_blocks(A,add_NAlines = TRUE))
-test_that("check_blocks",{expect_true(A2[[3]]["S 5",1]==A[[3]]["S 5",1])})
+X_agric =as.matrix(Russett[,c("gini","farm","rent")]);
+X_ind = as.matrix(Russett[,c("gnpr","labo")]);
+X_polit = as.matrix(Russett[ , c("demostab"), drop = FALSE]);
+blocks = list(X_agric,X_ind,X_polit);
+blocks2=check_blocks(blocks,add_NAlines=TRUE)
+test_that("test_check_unidimensional_blocks",{
+    expect_true(rownames(blocks2[[3]])[45]=="Uruguay")
+})
 
 
- A[[1]][2, 3] <- "character"
- try(check_blocks(A))
-# A[[1]][2, 3] <- runif(1)
-# init : boolean (FALSE by default) for the first block checking
+X_agric =as.matrix(Russett[,c("gini","farm","rent")]);
+X_ind = as.matrix(Russett[,c("gnpr","labo")]);
+colnames(X_ind)=c("gini","labo")
+blocks=list(agri=X_agric,ind=X_ind)
+blocks2=check_blocks(blocks,add_NAlines=TRUE)
 
 
-# test with blocks with 1 column
+test_that("test_check_same_var_block",{
+    expect_true(colnames(blocks2[[1]])[1]=="agri_gini")
+})
 
+# Check blocks with one qualitative checkblock
+X_agric =as.matrix(Russett[,c("gini","farm","rent")]);
+X_ind = as.matrix(Russett[,c("gnpr","labo")]);
+X_polit = as.matrix(Russett[ , c("demostab"), drop = FALSE]);
+X_polit[X_polit==0]="demo"
+X_polit[X_polit==1]="Ndem"
+blocks = list(X_agric,X_ind,X_polit);
+blocks2=check_blocks(blocks,add_NAlines=TRUE)
+
+# warning if some lines are suppressed (because same rownames)
+X_agric =as.matrix(Russett[,c("gini","farm","rent")]);
+X_ind = as.matrix(Russett[,c("gnpr","labo")]);
+X_polit = as.matrix(Russett[ , c("demostab"), drop = FALSE]);
+X_polit[X_polit==0]="demo"
+X_polit[X_polit==1]="Ndem"
+blocks = list(rbind(X_agric,X_agric),
+              rbind(X_ind,X_ind),
+              rbind(X_polit,X_polit));
+blocks2=check_blocks(blocks, add_NAlines=TRUE)

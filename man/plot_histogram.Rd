@@ -4,30 +4,34 @@
 \alias{plot_histogram}
 \title{Histogram settings}
 \usage{
-plot_histogram(p, df, title = "", color = "black",
-  low_col = "khaki2", high_col = "coral3", mid_col = NULL, cex = 1,
-  cex_sub = 16 * cex, cex_axis = 10 * cex)
+plot_histogram(
+  p,
+  df,
+  title = "",
+  group = NA,
+  colors = NULL,
+  cex = 1,
+  cex_main = 12 * cex,
+  cex_sub = 10 * cex,
+  cex_axis = 10 * cex
+)
 }
 \arguments{
 \item{p}{A ggplot object}
 
-\item{df}{A dataframe}
+\item{df}{A data.frame}
 
-\item{title}{A character with the name of the space (either "Variables" or
-"Samples")}
+\item{title}{A character giving the title of the plot}
 
-\item{color}{A vector of character giving the colors for the rows}
+\item{group}{A vector of character giving the group for the rows}
 
-\item{low_col}{A character giving the color used for the lowest part of
-the gradient}
-
-\item{high_col}{A character giving the color used for the highest part of
-the gradient}
-
-\item{mid_col}{A character giving the color used for the middle part of
-the gradient}
+\item{colors}{Either a vector of integers (each integer corresponding to a
+color) or of characters corresponding to names of colors (as "blue",see
+colors()) or RGB code ("#FFFFFF").}
 
 \item{cex}{An integer for the size of the plot parameters}
+
+\item{cex_main}{An integer for the size of the title}
 
 \item{cex_sub}{An integer for the size of the subtitle}
 
@@ -35,14 +39,4 @@ the gradient}
 }
 \description{
 Default font for a vertical barplot.
-}
-\examples{
-df = data.frame(x = runif(30), order = 30:1)
-library("ggplot2")
-p = ggplot(df, aes(order, x))
-plot_histogram(p, df, "This is my title")
-# Add colors per levels of a variable
-df$color = rep(c(1,2,3), each=10)
-p = ggplot(df, aes(order, x, fill = color))
-plot_histogram(p, df, "Histogram", as.character(df$color))
 }
